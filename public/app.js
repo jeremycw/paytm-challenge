@@ -24,7 +24,79 @@ var paytmChallengeApp = { };
     }
   });
 }(paytmChallengeApp));
+paytmChallengeApp.HistoryViewController = function(http, historyView) {
+  historyView.onShow = function() {
+    http.get("/queries", null,
+      function(data) {
+        historyView.displayHistory(data);
+      },
+      function(error) {
+        historyView.displayError("Error");
+      });
+  };
 
+  historyView.backHandler = function() {
+    historyView.goTo("queryView");
+  };
+
+  historyView.selectQueryHandler = function(queryId) {
+    historyView.goTo("queryView", queryId);
+  };
+};
+paytmChallengeApp.QueryViewController = function(http, queryView) {
+  queryView.onShow = function(queryId) {
+    queryView.clearResults();
+    http.get("/queries/"+queryId, null,
+      function(data) {
+        queryView.displayResults(data.results);
+      },
+      function(error) {
+        queryView.displayError("Error");
+      });
+  };
+
+  queryView.queryHandler = function(formData) {
+    http.post("/queries", formData,
+      function(data) {
+        queryView.displayResults(data.results);
+      },
+      function(error) {
+        queryView.displayError("Error");
+      });
+  };
+
+  queryView.logoutHandler = function() {
+    http.clearToken();
+    queryView.goTo("registrationView");
+  };
+
+  queryView.historyHandler = function() {
+    queryView.goTo("historyView");
+  };
+};
+paytmChallengeApp.RegistrationViewController = function(http, registrationView) {
+  registrationView.registrationHandler = function(formData) {
+      http.post("/users", formData,
+        function(data) {
+          http.setToken(data.auth_token);
+          registrationView.goTo("queryView");
+        },
+        function(error) {
+          registrationView.displayError("Error");
+        });
+  };
+
+  registrationView.loginHandler = function(formData) {
+    http.post("/session", formData,
+      function(data) {
+        http.setToken(data.auth_token);
+        registrationView.goTo("queryView");
+      },
+      function(error) {
+        registrationView.displayError("Error");
+      });
+  };
+};
 paytmChallengeApp.Http = function() {
   var http = {};
   http.token = window.localStorage.getItem("token");
@@ -72,17 +144,6 @@ paytmChallengeApp.Http = function() {
 
   return http;
 };
-
-paytmChallengeApp.Views = function() {
-  var views = {};
-
-  views.addView = function(view, name) {
-    views[name] = view;
-  };
-
-  return views;
-}
-
 paytmChallengeApp.BaseView = function(views) {
 
   return {
@@ -110,7 +171,80 @@ paytmChallengeApp.BaseView = function(views) {
   };
 
 };
+paytmChallengeApp.HistoryView = function(baseView) {
+  var historyView = {
+    id: "history-view",
 
+    displayHistory: function(data) {
+      $("#history-results ul").empty();
+      data.forEach(function(item) {
+        $("#history-results ul").append("<li><a href=\"#/queries/"+item.id+"\">"+item.string+"</a></li>");
+      });
+    },
+
+    __proto__: baseView
+  };
+
+  $("#history-back").live("click", function(e) {
+    historyView.backHandler();
+  });
+
+  $("#history-results a").live("click", function(e) {
+    var queryId = $(this).attr("href").split("/")[2];
+    historyView.selectQueryHandler(queryId);
+  });
+
+  return historyView;
+};
+paytmChallengeApp.QueryView = function(baseView) {
+  var queryView = {
+    id: "query-view",
+    queryHandler: null,
+    logoutHandler: null,
+    historyHandler: null,
+
+    displayResults: function(data) {
+      this.clearResults();
+      data.forEach(function(item) {
+        $("#query-results ul").append(
+            "<li>" +
+              "Name: " + item.name +
+              "</br>" +
+              "Cost: $" + item.price_in_cents / 100 +
+              "</br>" +
+              "Volume: " + item.volume_in_milliliters + "ml" +
+              "</br>" +
+              "Alcohol %: " + item.alcohol_content / 100 +
+              "</br>" +
+              "Price per liter of alcohol: $" + item.price_per_liter_of_alcohol_in_cents / 100 +
+              "</br>" +
+            "</li>"
+          );
+      });
+    },
+
+    clearResults: function() {
+      $("#query-results ul").empty();
+    },
+
+    __proto__: baseView
+  };
+
+  $("#query-form").live("submit", function(e) {
+    e.preventDefault();
+    queryView.queryHandler({ q: $("#query-string").val() });
+  });
+
+  $("#logout-link").live("click", function(e) {
+    queryView.logoutHandler();
+  });
+
+  $("#history-link").live("click", function(e) {
+    queryView.historyHandler();
+  });
+
+  return queryView;
+};
 paytmChallengeApp.RegistrationView = function(baseView) {
   var registrationView = {
     id: "register-view",
@@ -140,142 +274,12 @@ paytmChallengeApp.RegistrationView = function(baseView) {
   return registrationView;
 
 };
+paytmChallengeApp.Views = function() {
+  var views = {};
 
-paytmChallengeApp.QueryView = function(baseView) {
-  var queryView = {
-    id: "query-view",
-    queryHandler: null,
-    logoutHandler: null,
-    historyHandler: null,
-
-    displayResults: function(data) {
-      this.clearResults();
-      data.forEach(function(item) {
-        $("#query-results ul").append("<li>"+item.name+"</li>");
-      });
-    },
-
-    clearResults: function() {
-      $("#query-results ul").empty();
-    },
-
-    __proto__: baseView
+  views.addView = function(view, name) {
+    views[name] = view;
   };
 
-  $("#query-form").live("submit", function(e) {
-    e.preventDefault();
-    queryView.queryHandler({ q: $("#query-string").val() });
-  });
-
-  $("#logout-link").live("click", function(e) {
-    queryView.logoutHandler();
-  });
-
-  $("#history-link").live("click", function(e) {
-    queryView.historyHandler();
-  });
-
-  return queryView;
-};
-
-paytmChallengeApp.HistoryView = function(baseView) {
-  var historyView = {
-    id: "history-view",
-
-    displayHistory: function(data) {
-      $("#history-results ul").empty();
-      data.forEach(function(item) {
-        $("#history-results ul").append("<li><a href=\"#/queries/"+item.id+"\">"+item.string+"</a></li>");
-      });
-    },
-
-    __proto__: baseView
-  };
-
-  $("#history-back").live("click", function(e) {
-    historyView.backHandler();
-  });
-
-  $("#history-results a").live("click", function(e) {
-    var queryId = $(this).attr("href").split("/")[2];
-    historyView.selectQueryHandler(queryId);
-  });
-
-  return historyView;
-};
-
-paytmChallengeApp.HistoryViewController = function(http, historyView) {
-  historyView.onShow = function() {
-    http.get("/queries", null,
-      function(data) {
-        historyView.displayHistory(data);
-      },
-      function(error) {
-        historyView.displayError("Error");
-      });
-  };
-
-  historyView.backHandler = function() {
-    historyView.goTo("queryView");
-  };
-
-  historyView.selectQueryHandler = function(queryId) {
-    historyView.goTo("queryView", queryId);
-  };
-};
-
-paytmChallengeApp.RegistrationViewController = function(http, registrationView) {
-  registrationView.registrationHandler = function(formData) {
-      http.post("/users", formData,
-        function(data) {
-          http.setToken(data.auth_token);
-          registrationView.goTo("queryView");
-        },
-        function(error) {
-          registrationView.displayError("Error");
-        });
-  };
-
-  registrationView.loginHandler = function(formData) {
-    http.post("/session", formData,
-      function(data) {
-        http.setToken(data.auth_token);
-        registrationView.goTo("queryView");
-      },
-      function(error) {
-        registrationView.displayError("Error");
-      });
-  };
-};
-
-paytmChallengeApp.QueryViewController = function(http, queryView) {
-  queryView.onShow = function(queryId) {
-    queryView.clearResults();
-    http.get("/queries/"+queryId, null,
-      function(data) {
-        queryView.displayResults(data.results);
-      },
-      function(error) {
-        queryView.displayError("Error");
-      });
-  };
-
-  queryView.queryHandler = function(formData) {
-    http.post("/queries", formData,
-      function(data) {
-        queryView.displayResults(data.results);
-      },
-      function(error) {
-        queryView.displayError("Error");
-      });
-  };
-
-  queryView.logoutHandler = function() {
-    http.clearToken();
-    queryView.goTo("registrationView");
-  };
-
-  queryView.historyHandler = function() {
-    queryView.goTo("historyView");
-  };
+  return views;
 };
