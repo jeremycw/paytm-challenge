@@ -1,0 +1,3 @@
+url: http://paytm-challenge.s3-website.us-east-2.amazonaws.com/
+pool id: us-east-2_lXXUJ105I
+app client id: 7e0553o1bn8aeuob6mc7tha0si
