@@ -1,13 +1,15 @@
 paytmChallengeApp.QueryViewController = function(http, queryView) {
-  queryView.onShow = function(queryId) {
+  queryView.onShow = function(params) {
     queryView.clearResults();
-    http.get("/queries/"+queryId, null,
-      function(data) {
-        queryView.displayResults(data.results);
-      },
-      function(error) {
-        queryView.displayError("Error");
-      });
+    if (params) {
+      http.get("/queries/"+params.id, null,
+        function(data) {
+          queryView.displayResults(data.results);
+        },
+        function(error) {
+          queryView.displayError("Error");
+        });
+    }
   };
 
   queryView.queryHandler = function(formData) {
@@ -22,10 +24,5 @@ paytmChallengeApp.QueryViewController = function(http, queryView) {
 
   queryView.logoutHandler = function() {
     http.clearToken();
-    queryView.goTo("registrationView");
-  };
-
-  queryView.historyHandler = function() {
-    queryView.goTo("historyView");
   };
 };

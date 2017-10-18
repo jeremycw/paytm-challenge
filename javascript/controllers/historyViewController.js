@@ -8,12 +8,4 @@ paytmChallengeApp.HistoryViewController = function(http, historyView) {
         historyView.displayError("Error");
       });
   };
-
-  historyView.backHandler = function() {
-    historyView.goTo("queryView");
-  };
-
-  historyView.selectQueryHandler = function(queryId) {
-    historyView.goTo("queryView", queryId);
-  };
 };

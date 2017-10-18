@@ -19,8 +19,14 @@ var paytmChallengeApp = { };
     ns.QueryViewController(http, queryView);
     ns.HistoryViewController(http, historyView);
 
+    ns.Router({
+      "/query": queryView,
+      "/register": registrationView,
+      "/history": historyView
+    });
+
     if (http.token) {
-      views.current.goTo("queryView");
+      window.location = "#/query";
     }
   });
 }(paytmChallengeApp));

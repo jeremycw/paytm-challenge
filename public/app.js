@@ -19,8 +19,14 @@ var paytmChallengeApp = { };
     ns.QueryViewController(http, queryView);
     ns.HistoryViewController(http, historyView);
 
+    ns.Router({
+      "/query": queryView,
+      "/register": registrationView,
+      "/history": historyView
+    });
+
     if (http.token) {
-      views.current.goTo("queryView");
+      window.location = "#/query";
     }
   });
 }(paytmChallengeApp));
@@ -34,25 +40,19 @@ paytmChallengeApp.HistoryViewController = function(http, historyView) {
         historyView.displayError("Error");
       });
   };
-
-  historyView.backHandler = function() {
-    historyView.goTo("queryView");
-  };
-
-  historyView.selectQueryHandler = function(queryId) {
-    historyView.goTo("queryView", queryId);
-  };
 };
 paytmChallengeApp.QueryViewController = function(http, queryView) {
-  queryView.onShow = function(queryId) {
+  queryView.onShow = function(params) {
     queryView.clearResults();
-    http.get("/queries/"+queryId, null,
-      function(data) {
-        queryView.displayResults(data.results);
-      },
-      function(error) {
-        queryView.displayError("Error");
-      });
+    if (params) {
+      http.get("/queries/"+params.id, null,
+        function(data) {
+          queryView.displayResults(data.results);
+        },
+        function(error) {
+          queryView.displayError("Error");
+        });
+    }
   };
 
   queryView.queryHandler = function(formData) {
@@ -67,11 +67,6 @@ paytmChallengeApp.QueryViewController = function(http, queryView) {
 
   queryView.logoutHandler = function() {
     http.clearToken();
-    queryView.goTo("registrationView");
-  };
-
-  queryView.historyHandler = function() {
-    queryView.goTo("historyView");
   };
 };
 paytmChallengeApp.RegistrationViewController = function(http, registrationView) {
@@ -79,7 +74,7 @@ paytmChallengeApp.RegistrationViewController = function(http, registrationView) 
       http.post("/users", formData,
         function(data) {
           http.setToken(data.auth_token);
-          registrationView.goTo("queryView");
+          window.location = "#/query";
         },
         function(error) {
           registrationView.displayError("Error");
@@ -90,7 +85,7 @@ paytmChallengeApp.RegistrationViewController = function(http, registrationView) 
     http.post("/session", formData,
       function(data) {
         http.setToken(data.auth_token);
-        registrationView.goTo("queryView");
+        window.location = "#/query";
       },
       function(error) {
         registrationView.displayError("Error");
@@ -115,6 +110,7 @@ paytmChallengeApp.Http = function() {
   };
 
   http.clearToken = function() {
+    this.token = null;
     window.localStorage.removeItem("token");
   };
 
@@ -144,6 +140,28 @@ paytmChallengeApp.Http = function() {
 
   return http;
 };
+paytmChallengeApp.Router = function(routes) {
+  var parseQueryString = function(queryString) {
+    var params = {};
+    queryString.split("&").forEach(function(pair) {
+      var tmp = pair.split("=");
+      params[tmp[0]] = tmp[1];
+    });
+    return params;
+  };
+
+  window.onhashchange = function() {
+    var tmp = window.location.hash.split("?");
+    var path = tmp[0].substr(1);
+    if (tmp.length > 1) {
+      var queryString = tmp[1];
+      var params = parseQueryString(queryString);
+      routes[path].goTo(routes[path], params);
+    } else {
+      routes[path].goTo(routes[path]);
+    }
+  };
+};
 paytmChallengeApp.BaseView = function(views) {
 
   return {
@@ -160,9 +178,13 @@ paytmChallengeApp.BaseView = function(views) {
       $("#"+views.current.id).css('display', 'inline');
     },
 
-    goTo: function(viewName, params) {
+    goTo: function(view, params) {
       views.current.hide(params);
-      views.current = views[viewName];
+      if (typeof view === "string") {
+        views.current = views[view];
+      } else {
+        views.current = view;
+      }
       views.current.show(params);
     },
 
@@ -178,21 +200,12 @@ paytmChallengeApp.HistoryView = function(baseView) {
     displayHistory: function(data) {
       $("#history-results ul").empty();
       data.forEach(function(item) {
-        $("#history-results ul").append("<li><a href=\"#/queries/"+item.id+"\">"+item.string+"</a></li>");
+        $("#history-results ul").append("<li><a href=\"#/query?id="+item.id+"\">"+item.string+"</a></li>");
       });
     },
 
     __proto__: baseView
   };
-
-  $("#history-back").live("click", function(e) {
-    historyView.backHandler();
-  });
-
-  $("#history-results a").live("click", function(e) {
-    var queryId = $(this).attr("href").split("/")[2];
-    historyView.selectQueryHandler(queryId);
-  });
 
   return historyView;
 };
@@ -237,10 +250,6 @@ paytmChallengeApp.QueryView = function(baseView) {
 
   $("#logout-link").live("click", function(e) {
     queryView.logoutHandler();
-  });
-
-  $("#history-link").live("click", function(e) {
-    queryView.historyHandler();
   });
 
   return queryView;

@@ -41,9 +41,5 @@ paytmChallengeApp.QueryView = function(baseView) {
     queryView.logoutHandler();
   });
 
-  $("#history-link").live("click", function(e) {
-    queryView.historyHandler();
-  });
-
   return queryView;
 };

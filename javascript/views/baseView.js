@@ -14,9 +14,13 @@ paytmChallengeApp.BaseView = function(views) {
       $("#"+views.current.id).css('display', 'inline');
     },
 
-    goTo: function(viewName, params) {
+    goTo: function(view, params) {
       views.current.hide(params);
-      views.current = views[viewName];
+      if (typeof view === "string") {
+        views.current = views[view];
+      } else {
+        views.current = view;
+      }
       views.current.show(params);
     },
 

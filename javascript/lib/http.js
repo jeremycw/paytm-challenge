@@ -16,6 +16,7 @@ paytmChallengeApp.Http = function() {
   };
 
   http.clearToken = function() {
+    this.token = null;
     window.localStorage.removeItem("token");
   };
 

@@ -3,7 +3,7 @@ paytmChallengeApp.RegistrationViewController = function(http, registrationView) 
       http.post("/users", formData,
         function(data) {
           http.setToken(data.auth_token);
-          registrationView.goTo("queryView");
+          window.location = "#/query";
         },
         function(error) {
           registrationView.displayError("Error");
@@ -14,7 +14,7 @@ paytmChallengeApp.RegistrationViewController = function(http, registrationView) 
     http.post("/session", formData,
       function(data) {
         http.setToken(data.auth_token);
-        registrationView.goTo("queryView");
+        window.location = "#/query";
       },
       function(error) {
         registrationView.displayError("Error");
