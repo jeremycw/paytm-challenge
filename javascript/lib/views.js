@@ -12,11 +12,17 @@ paytmChallengeApp.Views = function() {
     $(this).find("[name]").forEach(function(el) {
       params[$(el).attr("name")] = $(el).val();
     });
-    views.current.eventHandler($(this).data("event"), params);
+    views.current.eventHandler($(this).data("event")+":submit", params);
   });
 
-  $("a[data-event]").live("click", function(e) {
-    views.current.eventHandler($(this).data("event"));
+  $("form[data-event] input").live("input", function(e) {
+    var params = {};
+    params[$(this).attr("name")] = $(this).val();
+    views.current.eventHandler($(this).parents("form").data("event")+":input", params);
+  });
+
+  $("[data-event]").live("click", function(e) {
+    views.current.eventHandler($(this).data("event")+":click");
   });
   return views;
 };

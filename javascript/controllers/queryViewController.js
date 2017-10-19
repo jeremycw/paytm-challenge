@@ -1,5 +1,5 @@
 paytmChallengeApp.QueryViewController = function(http, queryView) {
-  queryView.onShow = function(params) {
+  queryView.handle(":show", function(params) {
     queryView.clearResults();
     if (params) {
       http.get("/queries/"+params.id, null,
@@ -10,24 +10,19 @@ paytmChallengeApp.QueryViewController = function(http, queryView) {
           queryView.displayError("Error");
         });
     }
-  };
+  });
 
-  queryView.eventHandler = function(eventName, params) {
-    switch (eventName) {
+  queryView.handle("search:submit", function(params) {
+    http.post("/queries", params,
+      function(data) {
+        queryView.displayResults(data.results);
+      },
+      function(error) {
+        queryView.displayError("Error");
+      });
+  });
 
-    case "search":
-      http.post("/queries", formData,
-        function(data) {
-          queryView.displayResults(data.results);
-        },
-        function(error) {
-          queryView.displayError("Error");
-        });
-      break;
-
-    case "logout":
-      http.clearToken();
-      break;
-    }
-  };
+  queryView.handle("logout:click", function() {
+    http.clearToken();
+  });
 };

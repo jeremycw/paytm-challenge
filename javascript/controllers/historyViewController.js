@@ -1,5 +1,5 @@
 paytmChallengeApp.HistoryViewController = function(http, historyView) {
-  historyView.onShow = function() {
+  historyView.handle(":show", function() {
     http.get("/queries", null,
       function(data) {
         historyView.displayHistory(data);
@@ -7,5 +7,5 @@ paytmChallengeApp.HistoryViewController = function(http, historyView) {
       function(error) {
         historyView.displayError("Error");
       });
-  };
+  });
 };
