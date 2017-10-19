@@ -3,6 +3,7 @@ paytmChallengeApp.BaseView = function(views) {
   return {
     onShow: function() {},
     onHide: function() {},
+    eventHandler: function(e, params) { console.log(e); },
 
     hide: function(params) {
       this.onHide(params);

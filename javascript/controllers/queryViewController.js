@@ -12,17 +12,22 @@ paytmChallengeApp.QueryViewController = function(http, queryView) {
     }
   };
 
-  queryView.queryHandler = function(formData) {
-    http.post("/queries", formData,
-      function(data) {
-        queryView.displayResults(data.results);
-      },
-      function(error) {
-        queryView.displayError("Error");
-      });
-  };
+  queryView.eventHandler = function(eventName, params) {
+    switch (eventName) {
 
-  queryView.logoutHandler = function() {
-    http.clearToken();
+    case "search":
+      http.post("/queries", formData,
+        function(data) {
+          queryView.displayResults(data.results);
+        },
+        function(error) {
+          queryView.displayError("Error");
+        });
+      break;
+
+    case "logout":
+      http.clearToken();
+      break;
+    }
   };
 };

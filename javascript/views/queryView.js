@@ -1,9 +1,6 @@
 paytmChallengeApp.QueryView = function(baseView) {
-  var queryView = {
+  return {
     id: "query-view",
-    queryHandler: null,
-    logoutHandler: null,
-    historyHandler: null,
 
     displayResults: function(data) {
       this.clearResults();
@@ -31,15 +28,4 @@ paytmChallengeApp.QueryView = function(baseView) {
 
     __proto__: baseView
   };
-
-  $("#query-form").live("submit", function(e) {
-    e.preventDefault();
-    queryView.queryHandler({ q: $("#query-string").val() });
-  });
-
-  $("#logout-link").live("click", function(e) {
-    queryView.logoutHandler();
-  });
-
-  return queryView;
 };

@@ -1,6 +1,9 @@
 paytmChallengeApp.RegistrationViewController = function(http, registrationView) {
-  registrationView.registrationHandler = function(formData) {
-      http.post("/users", formData,
+  registrationView.eventHandler = function(eventName, params) {
+    switch (eventName) {
+
+    case "register":
+      http.post("/users", { user: params },
         function(data) {
           http.setToken(data.auth_token);
           window.location = "#/query";
@@ -8,16 +11,18 @@ paytmChallengeApp.RegistrationViewController = function(http, registrationView) 
         function(error) {
           registrationView.displayError("Error");
         });
-  };
+      break;
 
-  registrationView.loginHandler = function(formData) {
-    http.post("/session", formData,
-      function(data) {
-        http.setToken(data.auth_token);
-        window.location = "#/query";
-      },
-      function(error) {
-        registrationView.displayError("Error");
-      });
+    case "login":
+      http.post("/session", { session: params },
+        function(data) {
+          http.setToken(data.auth_token);
+          window.location = "#/query";
+        },
+        function(error) {
+          registrationView.displayError("Error");
+        });
+      break;
+    }
   };
 };

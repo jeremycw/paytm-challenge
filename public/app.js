@@ -55,23 +55,31 @@ paytmChallengeApp.QueryViewController = function(http, queryView) {
     }
   };
 
-  queryView.queryHandler = function(formData) {
-    http.post("/queries", formData,
-      function(data) {
-        queryView.displayResults(data.results);
-      },
-      function(error) {
-        queryView.displayError("Error");
-      });
-  };
+  queryView.eventHandler = function(eventName, params) {
+    switch (eventName) {
 
-  queryView.logoutHandler = function() {
-    http.clearToken();
+    case "search":
+      http.post("/queries", formData,
+        function(data) {
+          queryView.displayResults(data.results);
+        },
+        function(error) {
+          queryView.displayError("Error");
+        });
+      break;
+
+    case "logout":
+      http.clearToken();
+      break;
+    }
   };
 };
 paytmChallengeApp.RegistrationViewController = function(http, registrationView) {
-  registrationView.registrationHandler = function(formData) {
-      http.post("/users", formData,
+  registrationView.eventHandler = function(eventName, params) {
+    switch (eventName) {
+
+    case "register":
+      http.post("/users", { user: params },
         function(data) {
           http.setToken(data.auth_token);
           window.location = "#/query";
@@ -79,17 +87,19 @@ paytmChallengeApp.RegistrationViewController = function(http, registrationView) 
         function(error) {
           registrationView.displayError("Error");
         });
-  };
+      break;
 
-  registrationView.loginHandler = function(formData) {
-    http.post("/session", formData,
-      function(data) {
-        http.setToken(data.auth_token);
-        window.location = "#/query";
-      },
-      function(error) {
-        registrationView.displayError("Error");
-      });
+    case "login":
+      http.post("/session", { session: params },
+        function(data) {
+          http.setToken(data.auth_token);
+          window.location = "#/query";
+        },
+        function(error) {
+          registrationView.displayError("Error");
+        });
+      break;
+    }
   };
 };
 paytmChallengeApp.Http = function() {
@@ -167,6 +177,7 @@ paytmChallengeApp.BaseView = function(views) {
   return {
     onShow: function() {},
     onHide: function() {},
+    eventHandler: function(e, params) { console.log(e); },
 
     hide: function(params) {
       this.onHide(params);
@@ -210,11 +221,8 @@ paytmChallengeApp.HistoryView = function(baseView) {
   return historyView;
 };
 paytmChallengeApp.QueryView = function(baseView) {
-  var queryView = {
+  return {
     id: "query-view",
-    queryHandler: null,
-    logoutHandler: null,
-    historyHandler: null,
 
     displayResults: function(data) {
       this.clearResults();
@@ -242,53 +250,32 @@ paytmChallengeApp.QueryView = function(baseView) {
 
     __proto__: baseView
   };
-
-  $("#query-form").live("submit", function(e) {
-    e.preventDefault();
-    queryView.queryHandler({ q: $("#query-string").val() });
-  });
-
-  $("#logout-link").live("click", function(e) {
-    queryView.logoutHandler();
-  });
-
-  return queryView;
 };
 paytmChallengeApp.RegistrationView = function(baseView) {
-  var registrationView = {
+  return {
     id: "register-view",
-    registerFormId: "register-form",
-    loginFormId: "login-form",
-    loginHandler: null,
-    registrationHandler: null,
     __proto__: baseView
   };
-
-  $("#register-form").live("submit", function(e) {
-    e.preventDefault();
-    registrationView.registrationHandler({ user: {
-      email: $("#register-email").val(),
-      password: $("#register-pwd").val(),
-      password_confirmation: $("#register-pwd-conf").val()
-    } });
-  });
-  $("#login-form").live("submit", function(e) {
-    e.preventDefault();
-    registrationView.loginHandler({ session: {
-      email: $("#login-email").val(),
-      password: $("#login-pwd").val(),
-    } });
-  });
-
-  return registrationView;
-
 };
 paytmChallengeApp.Views = function() {
   var views = {};
 
   views.addView = function(view, name) {
+    view.name = name;
     views[name] = view;
   };
 
+  $("form[data-event]").live("submit", function(e) {
+    e.preventDefault();
+    var params = {};
+    $(this).find("[name]").forEach(function(el) {
+      params[$(el).attr("name")] = $(el).val();
+    });
+    views.current.eventHandler($(this).data("event"), params);
+  });
+
+  $("a[data-event]").live("click", function(e) {
+    views.current.eventHandler($(this).data("event"));
+  });
   return views;
 };
