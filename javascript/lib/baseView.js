@@ -1,16 +1,7 @@
 paytmChallengeApp.BaseView = function(views) {
 
   return {
-    handlers: {},
-    eventHandler: function(eventName, params) {
-      if (this.handlers[eventName]) {
-        this.handlers[eventName](params);
-      }
-    },
-
-    handle: function(eventName, handler) {
-      this.handlers[eventName] = handler;
-    },
+    eventHandler: function() {},
 
     hide: function(params) {
       this.eventHandler(":hide", params);

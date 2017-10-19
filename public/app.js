@@ -31,80 +31,83 @@ var paytmChallengeApp = { };
   });
 }(paytmChallengeApp));
 paytmChallengeApp.HistoryViewController = function(http, historyView) {
-  historyView.handle(":show", function() {
-    http.get("/queries", null,
-      function(data) {
-        historyView.displayHistory(data);
-      },
-      function(error) {
-        historyView.displayError("Error");
-      });
-  });
+  historyView.eventHandler = function(eventName) {
+    if (eventName === ":show") {
+      http.get("/queries", null,
+        function(data) {
+          historyView.displayHistory(data);
+        },
+        function(error) {
+          historyView.displayError("Error");
+        });
+    }
+  };
 };
 paytmChallengeApp.QueryViewController = function(http, queryView) {
-  queryView.handle(":show", function(params) {
-    queryView.clearResults();
-    if (params) {
-      http.get("/queries/"+params.id, null,
+  queryView.eventHandler = function(eventName, params) {
+    switch (eventName) {
+
+    case ":show":
+      queryView.clearResults();
+      if (params) {
+        http.get("/queries/"+params.id, null,
+          function(data) {
+            queryView.displayResults(data.results);
+          },
+          function(error) {
+            queryView.displayError("Error");
+          });
+      }
+      break;
+
+    case "search:submit":
+      http.post("/queries", params,
         function(data) {
           queryView.displayResults(data.results);
         },
         function(error) {
           queryView.displayError("Error");
         });
+      break;
+
+    case "logout:click":
+      http.clearToken();
+      break;
     }
-  });
-
-  queryView.handle("search:submit", function(params) {
-    http.post("/queries", params,
-      function(data) {
-        queryView.displayResults(data.results);
-      },
-      function(error) {
-        queryView.displayError("Error");
-      });
-  });
-
-  queryView.handle("logout:click", function() {
-    http.clearToken();
-  });
+  };
 };
 paytmChallengeApp.RegistrationViewController = function(http, registrationView) {
-  registrationView.handle("register:submit", function(params) {
-    http.post("/users", { user: params },
-      function(data) {
-        http.setToken(data.auth_token);
-        window.location = "#/query";
-      },
-      function(error) {
-        registrationView.displayError("Error");
-      });
-  });
+  registrationView.eventHandler = function(eventName, params) {
+    switch (eventName) {
 
-  registrationView.handle("login:submit", function(params) {
-    http.post("/session", { session: params },
-      function(data) {
-        http.setToken(data.auth_token);
-        window.location = "#/query";
-      },
-      function(error) {
-        registrationView.displayError("Error");
-      });
-  });
+    case "register:submit":
+      http.post("/users", { user: params },
+        function(data) {
+          http.setToken(data.auth_token);
+          window.location = "#/query";
+        },
+        function(error) {
+          registrationView.displayError("Error");
+        });
+      break;
+
+    case "login:submit":
+      http.post("/session", { session: params },
+        function(data) {
+          http.setToken(data.auth_token);
+          window.location = "#/query";
+        },
+        function(error) {
+          registrationView.displayError("Error");
+        });
+      break;
+    }
+  };
 };
 paytmChallengeApp.BaseView = function(views) {
 
   return {
-    handlers: {},
-    eventHandler: function(eventName, params) {
-      if (this.handlers[eventName]) {
-        this.handlers[eventName](params);
-      }
-    },
-
-    handle: function(eventName, handler) {
-      this.handlers[eventName] = handler;
-    },
+    eventHandler: function() {},
 
     hide: function(params) {
       this.eventHandler(":hide", params);
